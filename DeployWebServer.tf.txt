@@ -1,0 +1,60 @@
+provider "aws" {
+          region = "ap-south-1"
+}
+
+#creating security group, allow ssh and http
+
+resource "aws_security_group" "hello-terra-ssh-http" 
+{
+          name = "hello-terra-http-ssh"
+          describe = "allowing ssh and http traffic"
+
+          ingress {
+                  from_port = 22
+                  to_port = 22
+                  protocal = "tcp"
+                  cidr_blocks = ["0.0.0/0"]      
+              }
+          ingress {
+                  from_port = 80
+                  to_port = 80
+                  protocal = "tcp"
+                  cidr_blocks = ["0.0.0/0"]      
+              }
+             egress {
+                  from_port = 0
+                  to_port = 0
+                  protocal = "-1"
+                  cidr_blocks = ["0.0.0/0"]      
+              }
+}
+
+#Creating groups ends here
+
+#Creating aws ec2 instance
+
+resource "aws_instance" "hello-terra" {
+          ami = "ami-5b67c34"
+          instance_type = "t2.micro"
+          availability_zone = "ap-south-1a"
+          security_groups = ["{aws_security_group.hello-terra-ssh-http.name}"]
+          key_name ="My_Key"
+          user_data = <<- EOF
+                   #!/bin/bash
+                   sudo yum install httpd -y
+                   sudo systemctl start httpd
+                   sudo systemctl enable httpd
+                   echo "<html>
+                         <head>
+                         <title>Hello World</title>
+                         </head>
+                         <body>
+                         <h1>Hello World!</h1>
+                         </body>
+                         </html>" >> /html/index.html
+          EOF
+          tags = {
+                   Name = "webserver"
+           }
+
+
